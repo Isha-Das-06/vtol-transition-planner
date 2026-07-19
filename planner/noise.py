@@ -13,9 +13,9 @@ because both propulsion sets run. These are parameters, not claims.
 
 import numpy as np
 
-SOURCE_DB_AT_1M = {"MC": 100.0, "TRANSITION": 103.0, "FW": 88.0}
+SOURCE_DB_AT_1M = {"MC": 100.0, "TRANSITION": 106.0, "FW": 94.0}
 ATM_ABSORPTION_DB_PER_M = 0.005
-THRESHOLD_DB = 55.0            # 'annoyance' threshold at ground level
+THRESHOLD_DB = 50.0            # 'annoyance' threshold at ground level
 
 
 class GroundGrid:
@@ -28,7 +28,7 @@ class GroundGrid:
         rng = np.random.default_rng(seed)
         # synthetic population density: a handful of neighborhoods
         pop = np.zeros_like(self.X)
-        n_blobs = 6
+        n_blobs = 5
         for _ in range(n_blobs):
             cx = rng.uniform(0.1, 0.9) * route_len_m
             cy = rng.uniform(-0.6, 0.6) * half_width_m
@@ -36,7 +36,19 @@ class GroundGrid:
             sy = rng.uniform(300.0, 900.0)
             amp = rng.uniform(500.0, 3000.0)  # people per cell-ish, arbitrary units
             pop += amp * np.exp(-(((self.X - cx) / sx) ** 2 +
-                                  ((self.Y - cy) / sy) ** 2))
+                                  (((self.Y - cy) / sy) ** 2)))
+        # two dense neighborhoods pinned under the flight path: one where an
+        # energy-greedy planner transitions (near departure) and one mid-route
+        # directly below cruise — these create the energy/noise trade-off
+        # (fly low & cheap vs climb & quiet)
+        pop += 6000.0 * np.exp(-(((self.X - 0.12 * route_len_m) / 700.0) ** 2 +
+                                 ((self.Y - 150.0) / 500.0) ** 2))
+        pop += 5000.0 * np.exp(-(((self.X - 0.45 * route_len_m) / 900.0) ** 2 +
+                                 (self.Y / 400.0) ** 2))
+        # a suburban corridor running under most of the route (urban delivery
+        # paths follow roads/rivers lined with housing)
+        pop += 1200.0 * np.exp(-((self.Y - 80.0) / 600.0) ** 2) * \
+            np.clip((self.X / route_len_m - 0.15) * 3.0, 0.0, 1.0)
         self.pop = pop
         self.cell_area_km2 = ((self.xs[1] - self.xs[0]) *
                               (self.ys[1] - self.ys[0])) / 1e6

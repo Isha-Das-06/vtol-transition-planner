@@ -182,7 +182,8 @@ class TransitionPlanner:
             steps, e, nz, du
         return plan
 
-    def pareto_sweep(self, lams=(0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0)):
+    def pareto_sweep(self, lams=(0.0, 0.001, 0.002, 0.005, 0.01, 0.03, 0.1,
+                                 0.3, 1.0, 3.0)):
         plans = [self.solve(lam) for lam in lams]
         # keep only non-dominated
         front = []
