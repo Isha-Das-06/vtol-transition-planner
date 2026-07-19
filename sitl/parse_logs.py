@@ -20,31 +20,50 @@ FIGDIR = os.path.join(os.path.dirname(__file__), "..", "figures")
 
 
 def energy_trace(path):
-    """Return (t_s, cum_wh, vtol_mode_series) from a ULog."""
-    ulog = ULog(path, ["battery_status", "vehicle_status"])
+    """Return (t_s, cum_wh) from a ULog, truncated at touchdown.
+
+    The gz ground-contact glitch can let the model clip through the terrain
+    after landing; everything past the moment the vehicle first returns to
+    ground level (after having been airborne) is discarded.
+    """
+    ulog = ULog(path, ["battery_status", "vehicle_local_position"])
     bat = next(d for d in ulog.data_list if d.name == "battery_status")
     t = bat.data["timestamp"] / 1e6
     v = bat.data["voltage_v"]
+    # SITL's battery reports -1 in current_a; the real draw is in
+    # current_average_a. Prefer whichever actually varies.
     i = bat.data["current_a"]
-    p = v * i                                   # W
-    dt = np.diff(t, prepend=t[0])
-    cum_wh = np.cumsum(p * dt) / 3600.0
-    t0 = t[0]
+    if np.ptp(i) < 0.01 and "current_average_a" in bat.data:
+        i = bat.data["current_average_a"]
+    p = v * np.clip(i, 0.0, None)               # W
 
-    mode = None
+    # touchdown detection from local position (NED: z negative = airborne)
+    t_end = t[-1]
     try:
-        vs = next(d for d in ulog.data_list if d.name == "vehicle_status")
-        mode = (vs.data["timestamp"] / 1e6 - t0,
-                vs.data["vehicle_type"])        # 1=FW? PX4: 1 fixed wing, 2 MC
+        lp = next(d for d in ulog.data_list
+                  if d.name == "vehicle_local_position")
+        tz = lp.data["timestamp"] / 1e6
+        z = lp.data["z"]
+        airborne = z < -3.0                     # ever higher than 3 m
+        if airborne.any():
+            i_up = int(np.argmax(airborne))
+            after = np.where((tz > tz[i_up]) & (z > -0.5))[0]
+            if after.size:
+                t_end = tz[after[0]]
     except StopIteration:
         pass
-    return t - t0, cum_wh, mode
+
+    keep = t <= t_end
+    t, p = t[keep], p[keep]
+    dt = np.diff(t, prepend=t[0])
+    cum_wh = np.cumsum(p * dt) / 3600.0
+    return t - t[0], cum_wh
 
 
 def main(naive_path, opt_path):
     os.makedirs(FIGDIR, exist_ok=True)
-    tn, en, _ = energy_trace(naive_path)
-    to, eo, _ = energy_trace(opt_path)
+    tn, en = energy_trace(naive_path)
+    to, eo = energy_trace(opt_path)
 
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(10, 4.2), gridspec_kw={"width_ratios": [2.2, 1]})

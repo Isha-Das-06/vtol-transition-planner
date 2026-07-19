@@ -45,8 +45,10 @@ def main():
     scale = SITL_ROUTE_LEN_M / ROUTE_LEN_M
     params = {
         "optimized": {
-            "transition_out_m": round(fw_start * scale, 1),
-            "transition_back_m": round(fw_end * scale, 1),
+            # clamp so the back-transition finishes with margin before the pad
+            "transition_out_m": max(round(fw_start * scale, 1), 40.0),
+            "transition_back_m": min(round(fw_end * scale, 1),
+                                     SITL_ROUTE_LEN_M - 150.0),
             "cruise_alt_m": float(cruise_alt),
         },
         "naive": {

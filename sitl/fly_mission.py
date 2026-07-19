@@ -62,7 +62,9 @@ def build_items(home_lat, home_lon, transition_out_m, transition_back_m,
     lat_b, lon_b = offset_latlon(home_lat, home_lon, transition_back_m)
     lat_end, lon_end = offset_latlon(home_lat, home_lon, ROUTE_LEN_M)
 
-    add(MAV_CMD_NAV_VTOL_TAKEOFF, lat=home_lat, lon=home_lon,
+    # Plain MC takeoff (NAV_VTOL_TAKEOFF would auto-transition immediately,
+    # overriding the planner's schedule). Transitions are explicit DO items.
+    add(MAV_CMD_NAV_TAKEOFF, lat=home_lat, lon=home_lon,
         alt=cruise_alt_m, current=1)
     add(MAV_CMD_NAV_WAYPOINT, lat=lat_t, lon=lon_t, alt=cruise_alt_m)
     add(MAV_CMD_DO_VTOL_TRANSITION, p1=VTOL_STATE_FW, frame=MAV_FRAME_MISSION)
@@ -119,24 +121,31 @@ async def run(plan_name):
     home_lat, home_lon = pos.latitude_deg, pos.longitude_deg
     print(f"home: {home_lat:.6f}, {home_lon:.6f}")
 
+    # lighter logging: default profile only (halves ULog size/IO)
+    try:
+        await drone.param.set_param_int("SDLOG_PROFILE", 1)
+    except Exception as e:  # noqa: BLE001 - non-fatal
+        print(f"param set warning: {e}")
+
     items = build_items(home_lat, home_lon, **plan)
     await drone.mission_raw.upload_mission(items)
-    print(f"mission '{plan_name}' uploaded ({len(items)} items)")
+    print(f"mission '{plan_name}' uploaded ({len(items)} items)", flush=True)
 
     await drone.action.arm()
     await drone.mission_raw.start_mission()
     print("mission started")
 
     async for progress in drone.mission_raw.mission_progress():
-        print(f"  item {progress.current}/{progress.total}")
+        print(f"  item {progress.current}/{progress.total}", flush=True)
         if progress.current == progress.total:
             break
 
-    print("mission complete; waiting for disarm…")
-    async for armed in drone.telemetry.armed():
-        if not armed:
-            break
-    print("disarmed. ULog is in PX4-Autopilot/build/px4_sitl_default/rootfs/log/")
+    # Final descent takes ~60-90 s; the gz ground-contact glitch can swallow
+    # the disarm event, so wait a fixed window instead of blocking on it.
+    print("mission waypoints complete; allowing 90 s for descent…", flush=True)
+    await asyncio.sleep(90)
+    print("done. ULog is in PX4-Autopilot/build/px4_sitl_default/rootfs/log/",
+          flush=True)
 
 
 if __name__ == "__main__":
