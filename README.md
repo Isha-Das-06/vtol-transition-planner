@@ -1,20 +1,17 @@
-# 🛫 Energy-Optimal VTOL Transition Planner
+# Energy-Optimal VTOL Transition Planner
 
 **When should a VTOL aircraft stop hovering and start flying like a plane?**
 This project answers that question with real physics, real forecast wind, a real
 autopilot — and treats *noise over people's heads* as a first-class objective,
 because noise is the actual regulatory blocker for urban electric aviation.
 
-![PX4](https://img.shields.io/badge/autopilot-PX4%20SITL-blue)
-![Gazebo](https://img.shields.io/badge/simulator-Gazebo%20Harmonic-orange)
-![Python](https://img.shields.io/badge/planner-Python%203-green)
-![Wind](https://img.shields.io/badge/wind-live%20Open--Meteo%20forecast-9cf)
+
 
 ![The standard_vtol quadplane climbing out in Gazebo](figures/02_transition_climb.png)
 
 ---
 
-## 🏆 Headline results
+## Headline results
 
 | Metric | Naive fixed schedule | Optimized plan | Improvement |
 |---|---|---|---|
@@ -32,7 +29,7 @@ battery telemetry.
 
 ---
 
-## 💡 The idea in 60 seconds
+## The idea in 60 seconds
 
 Almost every open-source AI-drone project targets multirotors. The genuinely
 hard regime of real electric aviation is the **VTOL transition** — the handover
@@ -59,7 +56,7 @@ PX4 SITL** to check the physics against a real autopilot.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -190,9 +187,9 @@ doesn't have.
 
 ---
 
-## 🚀 Run it
+## Run it
 
-**Planner + dashboard (any machine, ~2 min):**
+**Planner + dashboard :**
 
 ```bash
 pip install -r requirements.txt
@@ -215,7 +212,7 @@ python3 sitl/parse_logs.py data/logs/naive.ulg data/logs/optimized.ulg
 
 ---
 
-## ⚖️ Honest limitations
+## Honest limitations
 
 1. **Two validated links, not one closed loop.** Plans are optimized against
    real *forecast* wind; energy is validated against PX4 SITL, whose wind is a
@@ -234,7 +231,7 @@ python3 sitl/parse_logs.py data/logs/naive.ulg data/logs/optimized.ulg
    model clip through terrain at touchdown; logs are therefore integrated
    takeoff → touchdown (standard practice anyway).
 
-## 🤖 Why not reinforcement learning?
+## Why not reinforcement learning?
 
 The discretized problem (~800 states) is solved *optimally* in milliseconds by
 dynamic programming — RL would be slower, approximate, and un-debuggable in a
@@ -242,14 +239,14 @@ weekend. Learning belongs where the physics is weakest: replacing the analytic
 power model with one **fit from these same SITL flight logs** is the roadmap's
 next tier, and slots into the planner as a drop-in function.
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [ ] Power model learned from batch SITL flights (drop-in replacement for `vehicle.py`)
 - [ ] Forecast wind injected into the Gazebo world (closes limitation #1)
 - [ ] Real population raster (WorldPop/GHSL) under the noise grid
 - [ ] Battery-aware feasibility margins + reserve constraints
 
-## 📁 Repository
+## Repository
 
 ```
 planner/          energy model · wind · noise · DP optimizer · figure generator
@@ -261,6 +258,4 @@ data/logs/        the actual ULog flight logs behind the 23% claim
 
 ---
 
-*Built for a hackathon in one day — from empty machine to validated result —
-by one non-technical human and Claude. The aircraft is PX4's `standard_vtol`;
-the wind was real; the 23% was measured, not predicted.*
+
