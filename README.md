@@ -86,7 +86,7 @@ flowchart LR
 
 ---
 
-## 🔬 Detailed analysis
+## Detailed analysis
 
 ### 1. Vehicle energy model (`planner/vehicle.py`)
 
