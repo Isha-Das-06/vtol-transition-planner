@@ -62,7 +62,7 @@ opt = planner.solve(lam=lam)
 c1, c2, c3, c4 = st.columns(4)
 saved = 100 * (1 - opt.energy_wh / naive.energy_wh)
 c1.metric("Mission energy", f"{opt.energy_wh:.1f} Wh",
-          f"{saved:+.0f}% vs naive", delta_color="inverse")
+          f"{-saved:.0f}% vs naive", delta_color="inverse")
 c2.metric("Battery used", f"{100*opt.energy_wh/v.battery_wh:.0f}%")
 c3.metric("Flight time", f"{opt.duration_s/60:.1f} min")
 ln = grid.footprint(naive.steps)
