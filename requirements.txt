@@ -1,0 +1,8 @@
+numpy
+requests
+matplotlib
+plotly
+streamlit
+mavsdk
+pyulog
+pandas

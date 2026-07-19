@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+data/logs/*.ulg
+data/wind_cache/*.json
+sitl/plan_params.json
