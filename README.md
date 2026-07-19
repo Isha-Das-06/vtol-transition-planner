@@ -2,7 +2,7 @@
 
 **When should a VTOL aircraft stop hovering and start flying like a plane?**
 This project answers that question with real physics, real forecast wind, a real
-autopilot — and treats *noise over people's heads* as a first-class objective,
+autopilot and treats *noise over people's heads* as a first-class objective,
 because noise is the actual regulatory blocker for urban electric aviation.
 
 
@@ -20,7 +20,7 @@ because noise is the actual regulatory blocker for urban electric aviation.
 | Ground area louder than 50 dB | 2.13 km² | **0.42 km²** | **−80%** |
 | Population-weighted noise exposure | 1013 | 223 | −78% |
 
-The 23% is not a model grading its own homework: both plans were **flown by the
+The 23% was found as both plans were **flown by the
 PX4 autopilot in software-in-the-loop simulation** (the same flight code that
 flies real aircraft) and energy was integrated from the flight logs'
 battery telemetry.
@@ -32,12 +32,12 @@ battery telemetry.
 ## The idea in 60 seconds
 
 Almost every open-source AI-drone project targets multirotors. The genuinely
-hard regime of real electric aviation is the **VTOL transition** — the handover
-between rotor-borne hover and wing-borne cruise — and in practice it is still
+hard regime of real electric aviation is the **VTOL transition** , mainly the handover
+between rotor-borne hover and wing-borne cruise , and in practice it is still
 flown on **fixed, hand-tuned schedules** ("climb to 80 m, transition at
-waypoint 2, done").
+waypoint 2, and then its done").
 
-That schedule is an optimization variable, and it matters enormously:
+That schedule is an optimization variable and the reason it matters enormously is:
 
 - **Hover burns ~4–10× cruise power.** For our 5 kg quadplane: ~537 W rotor-borne
   vs ~125 W wing-borne at 16 m/s. Every second of unnecessary hover is pure waste.
@@ -50,7 +50,7 @@ That schedule is an optimization variable, and it matters enormously:
 
 So the planner takes a mission (A → B, payload, battery), pulls **today's
 forecast wind at multiple altitudes**, and searches every combination of
-altitude, position, and flight mode for the plan that minimizes energy — with
+altitude, position, and flight mode for the plan that minimizes energy with
 acoustic footprint as a tunable second objective. Every plan is then **flown in
 PX4 SITL** to check the physics against a real autopilot.
 
@@ -156,7 +156,7 @@ vertical-flight endpoints (0.42 km²).*
   between. The demo's middle point buys **63% less noise exposure for +0.9 Wh
   (+4%)** — noise-aware planning is nearly free, which is itself the insight.
 
-Sanity behaviors observed (not hard-coded): with a tailwind aloft it
+Sanity behaviors observed : with a tailwind aloft it
 transitions early and rides the wind; with the noise weight raised it climbs
 higher *before* going loud and shifts the transition away from dense cells.
 
@@ -214,7 +214,7 @@ python3 sitl/parse_logs.py data/logs/naive.ulg data/logs/optimized.ulg
 
 ## Honest limitations
 
-1. **Two validated links, not one closed loop.** Plans are optimized against
+1. **Two validated links rather than one closed loop.** Plans are optimized against
    real *forecast* wind; energy is validated against PX4 SITL, whose wind is a
    simple simulator parameter rather than the forecast field. We state both
    links separately and never claim the merged version.
